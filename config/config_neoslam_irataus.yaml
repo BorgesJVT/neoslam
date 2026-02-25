@@ -1,0 +1,42 @@
+visual_feature_extractor_node:
+  ros__parameters:
+    use_compressed: true
+
+neocortex_node:
+  ros__parameters:
+    # TemporalMemory parameters
+    tm_column_dimensions: 2048
+    tm_cells_per_column: 32
+    tm_activation_threshold: 4
+    tm_initial_permanence: 0.55
+    tm_connected_permanence: 0.5
+    tm_min_threshold: 1
+    tm_max_new_synapse_count: 20
+    tm_permanence_increment: 0.01
+    tm_permanence_decrement: 0.01
+    tm_predicted_segment_decrement: 0.0005
+    tm_max_segments_per_cell: 100
+    tm_max_synapses_per_segment: 100
+    tm_seed: 42
+
+spatial_view_cells_node:
+  ros__parameters:
+    theta_alpha: 384
+    theta_rho: 3
+    score_interval: 470
+
+pose_cells_node:
+  ros__parameters:
+    pc_dim_xy: 11
+    pc_vt_inject_energy: 0.1
+    pc_cell_x_size: 0.015
+    # draw
+    enable: true
+
+experience_map_node:
+  ros__parameters:
+    exp_loops: 20
+    exp_initial_em_deg: 140.0
+    # draw
+    enable: true
+

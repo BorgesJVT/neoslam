@@ -1,0 +1,297 @@
+#include "utils.h"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include "experience_map.h"
+#include <topological_msgs/msg/topological_action.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include "experience_map_scene.h"
+#include <topological_msgs/msg/topological_map.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/path.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include <visualization_msgs/msg/marker.hpp>
+
+#ifdef HAVE_IRRLICHT
+#include "experience_map_scene.h"
+#endif
+
+class ExperienceMapNode : public rclcpp::Node
+{
+public:
+  ExperienceMapNode()
+    : Node("experience_map_node")
+  {
+    // Declare and get parameters
+    this->declare_parameter("topic_root", "");
+    this->declare_parameter("exp_correction", 0.5);
+    this->declare_parameter("exp_loops", 10);
+    this->declare_parameter("exp_initial_em_deg", 90.0);
+    this->declare_parameter("enable", true);
+    this->declare_parameter("exp_map_size", 500);
+    this->declare_parameter("media_path", "");
+    this->declare_parameter("image_file", "");
+    
+    std::string topic_root = this->get_parameter("topic_root").as_string();
+    
+    // Log all parameters for debugging
+    RCLCPP_INFO(this->get_logger(), "ExperienceMap Parameters:");
+    RCLCPP_INFO(this->get_logger(), "  topic_root: %s", topic_root.c_str());
+    RCLCPP_INFO(this->get_logger(), "  exp_correction: %f", this->get_parameter("exp_correction").as_double());
+    RCLCPP_INFO(this->get_logger(), "  exp_loops: %ld", this->get_parameter("exp_loops").as_int());
+    RCLCPP_INFO(this->get_logger(), "  exp_initial_em_deg: %f", this->get_parameter("exp_initial_em_deg").as_double());
+    
+    // Create ExperienceMap with parameters
+    em = new ExperienceMap(
+      this->get_parameter("exp_correction").as_double(),
+      this->get_parameter("exp_loops").as_int(),
+      this->get_parameter("exp_initial_em_deg").as_double()
+    );
+    
+    pub_em = this->create_publisher<topological_msgs::msg::TopologicalMap>(
+      topic_root + "/ExperienceMap/Map", 10);
+    pub_em_markers = this->create_publisher<visualization_msgs::msg::Marker>(
+      topic_root + "/ExperienceMap/MapMarker", 10);
+    pub_pose = this->create_publisher<geometry_msgs::msg::PoseStamped>(
+      topic_root + "/ExperienceMap/RobotPose", 10);
+    pub_goal_path = this->create_publisher<nav_msgs::msg::Path>(
+      topic_root + "/ExperienceMap/PathToGoal", 10);
+    
+    sub_odometry = this->create_subscription<nav_msgs::msg::Odometry>(
+      topic_root + "/odom", 10,
+      std::bind(&ExperienceMapNode::odo_callback, this, std::placeholders::_1));
+    
+    sub_action = this->create_subscription<topological_msgs::msg::TopologicalAction>(
+      topic_root + "/PoseCell/TopologicalAction", 10,
+      std::bind(&ExperienceMapNode::action_callback, this, std::placeholders::_1));
+    
+    sub_goal = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+      topic_root + "/ExperienceMap/SetGoalPose", 10,
+      std::bind(&ExperienceMapNode::set_goal_pose_callback, this, std::placeholders::_1));
+    
+    RCLCPP_INFO(this->get_logger(), "ExperienceMap node initialized");
+    
+#ifdef HAVE_IRRLICHT
+    use_graphics = this->get_parameter("enable").as_bool();
+    if (use_graphics)
+    {
+      ems = new ExperienceMapScene(
+        this->get_parameter("exp_map_size").as_int(),
+        this->get_parameter("media_path").as_string(),
+        this->get_parameter("image_file").as_string(),
+        em
+      );
+    }
+#endif
+  }
+  
+  ~ExperienceMapNode()
+  {
+    if (em != nullptr)
+      delete em;
+#ifdef HAVE_IRRLICHT
+    if (ems != nullptr)
+      delete ems;
+#endif
+  }
+
+private:
+  void odo_callback(const nav_msgs::msg::Odometry::SharedPtr odo)
+  {
+    RCLCPP_DEBUG(this->get_logger(), "EM:odo_callback v=%f r=%f",
+                 odo->twist.twist.linear.x, odo->twist.twist.angular.z);
+
+    if (prev_time.seconds() > 0)
+    {
+      double time_diff = (rclcpp::Time(odo->header.stamp) - prev_time).seconds();
+      em->on_odo(odo->twist.twist.linear.x, odo->twist.twist.angular.z, time_diff);
+    }
+
+    if (em->get_current_goal_id() >= 0)
+    {
+      prev_goal_update = rclcpp::Time(odo->header.stamp);
+      em->calculate_path_to_goal(rclcpp::Time(odo->header.stamp).seconds());
+
+      nav_msgs::msg::Path path;
+      if (em->get_current_goal_id() >= 0)
+      {
+        em->get_goal_waypoint();
+
+        geometry_msgs::msg::PoseStamped pose;
+        path.header.stamp = this->now();
+        path.header.frame_id = "1";
+
+        path.poses.clear();
+        unsigned int trace_exp_id = em->get_goals()[0];
+        while (trace_exp_id != em->get_goal_path_final_exp())
+        {
+          pose.pose.position.x = em->get_experience(trace_exp_id)->x_m;
+          pose.pose.position.y = em->get_experience(trace_exp_id)->y_m;
+          path.poses.push_back(pose);
+
+          trace_exp_id = em->get_experience(trace_exp_id)->goal_to_current;
+        }
+
+        pub_goal_path->publish(path);
+      }
+      else
+      {
+        path.header.stamp = this->now();
+        path.header.frame_id = "1";
+        path.poses.clear();
+        pub_goal_path->publish(path);
+      }
+    }
+
+    prev_time = rclcpp::Time(odo->header.stamp);
+    
+    std::cout << "Current Exp: " << em->get_current_id() << " | Total Exps: " << em->get_num_experiences() << " | Total actions: " << action_counter << std::endl;
+    std::cout.flush();
+  }
+
+  void action_callback(const topological_msgs::msg::TopologicalAction::SharedPtr action)
+  {
+    action_counter++;
+        
+    RCLCPP_DEBUG(this->get_logger(), "EM:action_callback action=%d src=%d dst=%d",
+                 action->action, action->src_id, action->dest_id);
+
+    switch (action->action)
+    {
+      case topological_msgs::msg::TopologicalAction::CREATE_NODE:
+        em->on_create_experience(action->dest_id);
+        em->on_set_experience(action->dest_id, 0);
+        break;
+
+      case topological_msgs::msg::TopologicalAction::CREATE_EDGE:
+        em->on_create_link(action->src_id, action->dest_id, action->relative_rad);
+        em->on_set_experience(action->dest_id, action->relative_rad);
+        break;
+
+      case topological_msgs::msg::TopologicalAction::SET_NODE:
+        em->on_set_experience(action->dest_id, action->relative_rad);
+        break;
+    }
+
+    em->iterate();
+
+    geometry_msgs::msg::PoseStamped pose_output;
+    pose_output.header.stamp = this->now();
+    pose_output.header.frame_id = "1";
+    pose_output.pose.position.x = em->get_experience(em->get_current_id())->x_m;
+    pose_output.pose.position.y = em->get_experience(em->get_current_id())->y_m;
+    pose_output.pose.position.z = 0;
+    
+    tf2::Quaternion q;
+    q.setRPY(0, 0, em->get_experience(em->get_current_id())->th_rad);
+    pose_output.pose.orientation = tf2::toMsg(q);
+    
+    pub_pose->publish(pose_output);
+
+    if ((rclcpp::Time(action->header.stamp) - prev_pub_time).seconds() > 30.0)
+    {
+      prev_pub_time = rclcpp::Time(action->header.stamp);
+
+      topological_msgs::msg::TopologicalMap em_map;
+      em_map.header.stamp = this->now();
+      em_map.node_count = em->get_num_experiences();
+      em_map.node.resize(em->get_num_experiences());
+      
+      for (int i = 0; i < em->get_num_experiences(); i++)
+      {
+        em_map.node[i].id = em->get_experience(i)->id;
+        em_map.node[i].pose.position.x = em->get_experience(i)->x_m;
+        em_map.node[i].pose.position.y = em->get_experience(i)->y_m;
+        
+        tf2::Quaternion q;
+        q.setRPY(0, 0, em->get_experience(i)->th_rad);
+        em_map.node[i].pose.orientation = tf2::toMsg(q);
+      }
+
+      em_map.edge_count = em->get_num_links();
+      em_map.edge.resize(em->get_num_links());
+      
+      for (int i = 0; i < em->get_num_links(); i++)
+      {
+        em_map.edge[i].source_id = em->get_link(i)->exp_from_id;
+        em_map.edge[i].destination_id = em->get_link(i)->exp_to_id;
+        em_map.edge[i].duration = rclcpp::Duration::from_seconds(em->get_link(i)->delta_time_s);
+        em_map.edge[i].transform.translation.x = em->get_link(i)->d * cos(em->get_link(i)->heading_rad);
+        em_map.edge[i].transform.translation.y = em->get_link(i)->d * sin(em->get_link(i)->heading_rad);
+        
+        tf2::Quaternion q;
+        q.setRPY(0, 0, em->get_link(i)->facing_rad);
+        em_map.edge[i].transform.rotation = tf2::toMsg(q);
+      }
+      
+      pub_em->publish(em_map);
+    }
+
+    visualization_msgs::msg::Marker em_marker;
+    em_marker.header.stamp = this->now();
+    em_marker.header.frame_id = "1";
+    em_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    em_marker.points.resize(em->get_num_links() * 2);
+    em_marker.action = visualization_msgs::msg::Marker::ADD;
+    em_marker.scale.x = 0.01;
+    em_marker.color.a = 1;
+    em_marker.ns = "em";
+    em_marker.id = 0;
+    em_marker.pose.orientation.w = 1;
+    
+    for (int i = 0; i < em->get_num_links(); i++)
+    {
+      em_marker.points[i * 2].x = em->get_experience(em->get_link(i)->exp_from_id)->x_m;
+      em_marker.points[i * 2].y = em->get_experience(em->get_link(i)->exp_from_id)->y_m;
+      em_marker.points[i * 2].z = 0;
+      em_marker.points[i * 2 + 1].x = em->get_experience(em->get_link(i)->exp_to_id)->x_m;
+      em_marker.points[i * 2 + 1].y = em->get_experience(em->get_link(i)->exp_to_id)->y_m;
+      em_marker.points[i * 2 + 1].z = 0;
+    }
+
+    pub_em_markers->publish(em_marker);
+
+#ifdef HAVE_IRRLICHT
+    if (use_graphics)
+    {
+      ems->update_scene();
+      ems->draw_all();
+    }
+#endif
+  }
+
+  void set_goal_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
+  {
+    em->add_goal(pose->pose.position.x, pose->pose.position.y);
+  }
+
+  ExperienceMap* em = nullptr;
+  rclcpp::Publisher<topological_msgs::msg::TopologicalMap>::SharedPtr pub_em;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_em_markers;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_goal_path;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry;
+  rclcpp::Subscription<topological_msgs::msg::TopologicalAction>::SharedPtr sub_action;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_goal;
+  rclcpp::Time prev_time{0, 0, RCL_ROS_TIME};
+  rclcpp::Time prev_goal_update{0, 0, RCL_ROS_TIME};
+  rclcpp::Time prev_pub_time{0, 0, RCL_ROS_TIME};
+  int action_counter = 0;
+#ifdef HAVE_IRRLICHT
+  ExperienceMapScene *ems = nullptr;
+  bool use_graphics;
+#endif
+};
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<ExperienceMapNode>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+
+  return 0;
+}
