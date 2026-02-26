@@ -19,21 +19,24 @@ public:
         this->declare_parameter<int>("theta_alpha", 384);
         this->declare_parameter<int>("theta_rho", 3);
         this->declare_parameter<int>("score_interval", 470);
+        this->declare_parameter<int>("exclude_recent_intervals", 3);
         
         std::string topic_root = this->get_parameter("topic_root").as_string();
         int theta_alpha = this->get_parameter("theta_alpha").as_int();
         int theta_rho = this->get_parameter("theta_rho").as_int();
         int score_interval = this->get_parameter("score_interval").as_int();
+        int exclude_recent_intervals = this->get_parameter("exclude_recent_intervals").as_int();
         
         RCLCPP_INFO(this->get_logger(), "SpatialViewCellsNode Parameters:");
         RCLCPP_INFO(this->get_logger(), "  topic_root: %s", topic_root.c_str());
         RCLCPP_INFO(this->get_logger(), "  theta_alpha: %d", theta_alpha);
         RCLCPP_INFO(this->get_logger(), "  theta_rho: %d", theta_rho);
         RCLCPP_INFO(this->get_logger(), "  score_interval: %d", score_interval);
+        RCLCPP_INFO(this->get_logger(), "  exclude_recent_intervals: %d", exclude_recent_intervals);
         
         // Initialize LocalViewMatchWithIntervals
         lv_ = std::make_unique<LocalViewMatchWithIntervals>(
-            theta_alpha, theta_rho, score_interval
+            theta_alpha, theta_rho, score_interval, exclude_recent_intervals
         );
         
         // Create publisher for view templates

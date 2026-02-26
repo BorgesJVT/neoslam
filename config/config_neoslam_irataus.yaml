@@ -30,6 +30,7 @@ spatial_view_cells_node:
     theta_alpha: 384
     theta_rho: 3
     score_interval: 470
+    exclude_recent_intervals: 3
 
 pose_cells_node:
   ros__parameters:

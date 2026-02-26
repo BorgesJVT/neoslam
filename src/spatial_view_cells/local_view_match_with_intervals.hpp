@@ -81,11 +81,14 @@ public:
      * @param theta_alpha_ Threshold de similaridade para estender intervalos
      * @param theta_rho_ Duração máxima de um intervalo (em imagens)
      * @param score_interval_ Threshold de score para detecção de loop closure
+     * @param exclude_recent_intervals_ Número de intervalos recentes a excluir da detecção de loop closure
      */
-    LocalViewMatchWithIntervals(int theta_alpha_, int theta_rho_, int score_interval_)
+    LocalViewMatchWithIntervals(int theta_alpha_, int theta_rho_, int score_interval_, 
+                                int exclude_recent_intervals_ = 3)
         : theta_alpha(theta_alpha_), 
           theta_rho(theta_rho_), 
           score_interval(score_interval_),
+          exclude_recent_intervals(exclude_recent_intervals_),
           is_initialized_(false),  // Ainda não processou primeira imagem
           n_interval(0), 
           prev_interval(0),
@@ -96,6 +99,7 @@ public:
         // std::cout << "  theta_alpha = " << theta_alpha << " (similarity threshold)" << std::endl;
         // std::cout << "  theta_rho = " << theta_rho << " (max interval duration)" << std::endl;
         // std::cout << "  score_interval = " << score_interval << " (loop closure threshold)" << std::endl;
+        // std::cout << "  exclude_recent_intervals = " << exclude_recent_intervals << " (recent intervals to exclude)" << std::endl;
     }
 
     /**
@@ -249,10 +253,10 @@ public:
         
         // ==============================================================
         // PASSO 6: Filtragem de Candidatos a Loop Closure
-        // Exclui últimos 3 intervalos (muito recentes, evita falsos positivos)
+        // Exclui últimos N intervalos (muito recentes, evita falsos positivos)
         // ==============================================================
         Eigen::Index n = similarity_scores.size();
-        Eigen::Index block_rows = n > 3 ? n - 3 : 0;
+        Eigen::Index block_rows = n > exclude_recent_intervals ? n - exclude_recent_intervals : 0;
         Eigen::VectorXi scores_for_matching;
         
         if (block_rows > 0) {
@@ -414,6 +418,7 @@ private:
     int theta_alpha;       // Threshold de similaridade para intervalos
     int theta_rho;         // Duração máxima de um intervalo
     int score_interval;    // Threshold para detecção de loop closure
+    int exclude_recent_intervals;  // Número de intervalos recentes a excluir
     
     // ==============================================================
     // Estado Interno
