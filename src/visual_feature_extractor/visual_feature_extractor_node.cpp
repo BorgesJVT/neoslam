@@ -22,19 +22,39 @@ public:
     this->declare_parameter("topic_root", "");
     this->declare_parameter("python_module_path", "");
     this->declare_parameter("use_compressed", true);
+    this->declare_parameter("frame_stride", 1);
+    this->declare_parameter("crop_image", false);
+    this->declare_parameter("image_crop_x_min", 0);
+    this->declare_parameter("image_crop_x_max", -1);
+    this->declare_parameter("image_crop_y_min", 0);
+    this->declare_parameter("image_crop_y_max", -1);
     
     std::string topic_root = this->get_parameter("topic_root").as_string();
     std::string python_module_path = this->get_parameter("python_module_path").as_string();
     bool use_compressed = this->get_parameter("use_compressed").as_bool();
+    bool crop_image = this->get_parameter("crop_image").as_bool();
+    int image_crop_x_min = this->get_parameter("image_crop_x_min").as_int();
+    int image_crop_x_max = this->get_parameter("image_crop_x_max").as_int();
+    int image_crop_y_min = this->get_parameter("image_crop_y_min").as_int();
+    int image_crop_y_max = this->get_parameter("image_crop_y_max").as_int();
+    int frame_stride = this->get_parameter("frame_stride").as_int();
     
     RCLCPP_INFO(this->get_logger(), "VisualFeatureExtractor Parameters:");
     RCLCPP_INFO(this->get_logger(), "  topic_root: %s", topic_root.c_str());
     RCLCPP_INFO(this->get_logger(), "  python_module_path: %s", python_module_path.c_str());
     RCLCPP_INFO(this->get_logger(), "  use_compressed: %s", use_compressed ? "true" : "false");
+    RCLCPP_INFO(this->get_logger(), "  frame_stride: %d", frame_stride);
+    RCLCPP_INFO(this->get_logger(), "  crop_image: %s", crop_image ? "true" : "false");
+    RCLCPP_INFO(this->get_logger(), "  image_crop_x_min: %d", image_crop_x_min);
+    RCLCPP_INFO(this->get_logger(), "  image_crop_x_max: %d", image_crop_x_max);
+    RCLCPP_INFO(this->get_logger(), "  image_crop_y_min: %d", image_crop_y_min);
+    RCLCPP_INFO(this->get_logger(), "  image_crop_y_max: %d", image_crop_y_max);
     
     // Initialize Python wrapper
     try {
-      initialize_python(python_module_path);
+      initialize_python(python_module_path, frame_stride, crop_image, 
+                       image_crop_x_min, image_crop_x_max,
+                       image_crop_y_min, image_crop_y_max);
       RCLCPP_INFO(this->get_logger(), "Python module initialized successfully!");
     } catch (const std::exception& e) {
       RCLCPP_ERROR(this->get_logger(), "Failed to initialize Python module: %s", e.what());
@@ -71,16 +91,20 @@ public:
   }
 
 private:
-  void initialize_python(const std::string& python_module_path)
+  void initialize_python(const std::string& python_module_path, int frame_stride,
+                        bool crop_image, int image_crop_x_min, int image_crop_x_max,
+                        int image_crop_y_min, int image_crop_y_max)
   {
     // Add Python module path to sys.path
     py::module sys = py::module::import("sys");
     sys.attr("path").attr("insert")(1, python_module_path);
     
-    // Import the Python module and create instance
+    // Import the Python module and create instance with parameters
     vision_module_ = py::module::import("visual_feature_extractor_node");
     vision_class_ = vision_module_.attr("VisualFeatureExtractorNode");
-    vision_instance_ = vision_class_();
+    vision_instance_ = vision_class_(frame_stride, crop_image, 
+                                      image_crop_x_min, image_crop_x_max,
+                                      image_crop_y_min, image_crop_y_max);
     
     std::cout << "[VisualFeatureExtractorNode] Python module initialized successfully!" << std::endl;
   }

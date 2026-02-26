@@ -23,13 +23,15 @@ class VisualFeatureExtractorNode:
             x = self.features(x)
             return x
 
-    def __init__(self):
+    def __init__(self, frame_stride=1, crop_image=False, image_crop_x_min=40, image_crop_x_max=260, 
+                 image_crop_y_min=0, image_crop_y_max=224):
         #Parameters
-        self.crop_image = False
-        self.crop_width_start = 40
-        self.crop_width_end = 260
-        self.crop_height_start = 0
-        self.crop_height_end = 224
+        self.frame_stride = frame_stride
+        self.crop_image = 1 if crop_image < 1 else crop_image
+        self.crop_width_start = image_crop_x_min
+        self.crop_width_end = image_crop_x_max
+        self.crop_height_start = image_crop_y_min
+        self.crop_height_end = image_crop_y_max
         self.image_filter = 'none'
         
         self.counter = 0
@@ -43,7 +45,10 @@ class VisualFeatureExtractorNode:
 
     
     def image_callback_wrapper(self, img_bytes, width, height, encoding):
-        # img_np = np.frombuffer(img_bytes, dtype=np.uint8).reshape((height, width))
+        if (self.counter % self.frame_stride != 0):
+            self.counter += 1
+            return
+        
         img_np = np.frombuffer(img_bytes, dtype=np.uint8)
 
         # Verify if array length to determine the format
@@ -89,6 +94,10 @@ class VisualFeatureExtractorNode:
         Returns:
             Feature vector as numpy array (64896 features)
         """
+        if (self.counter % self.frame_stride != 0):
+            self.counter += 1
+            return
+        
         # Decode compressed image using OpenCV
         img_np = np.frombuffer(img_bytes, dtype=np.uint8)
         img_origin = cv2.imdecode(img_np, cv2.IMREAD_COLOR)

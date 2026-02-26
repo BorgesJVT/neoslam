@@ -1,6 +1,12 @@
 visual_feature_extractor_node:
   ros__parameters:
     use_compressed: true
+    frame_stride: 4
+    crop_image: true
+    image_crop_x_min: 40
+    image_crop_x_max: 600
+    image_crop_y_min: 150
+    image_crop_y_max: 300
 
 neocortex_node:
   ros__parameters:
