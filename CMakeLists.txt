@@ -105,6 +105,7 @@ ament_target_dependencies(visual_feature_extractor_node
   std_msgs
   sensor_msgs
   cv_bridge
+  topological_msgs
 )
 
 # binary_projector_node executable
@@ -116,6 +117,7 @@ target_include_directories(binary_projector_node PRIVATE
 ament_target_dependencies(binary_projector_node
   rclcpp
   std_msgs
+  topological_msgs
 )
 
 # neocortex_node executable
@@ -130,6 +132,7 @@ target_link_libraries(neocortex_node
 ament_target_dependencies(neocortex_node
   rclcpp
   std_msgs
+  topological_msgs
 )
 
 # spatial_view_cells_node executable

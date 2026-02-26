@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/u_int8_multi_array.hpp>
-#include <std_msgs/msg/u_int32_multi_array.hpp>
+#include <topological_msgs/msg/binary_features.hpp>
+#include <topological_msgs/msg/sdr_stamped.hpp>
 #include <memory>
 #include <iostream>
 #include <chrono>
@@ -70,13 +70,13 @@ public:
         tm_->printParameters();
         
         // Create publisher for SDR
-        pub_sdr_ = this->create_publisher<std_msgs::msg::UInt32MultiArray>(
+        pub_sdr_ = this->create_publisher<topological_msgs::msg::SdrStamped>(
             topic_root + "/sdr", 10);
         
         // Subscribe to binary features
-        sub_bin_features_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
+        sub_bin_features_ = this->create_subscription<topological_msgs::msg::BinaryFeatures>(
             topic_root + "/bin_features", 10,
-            [this](const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
+            [this](const topological_msgs::msg::BinaryFeatures::SharedPtr msg) {
                 this->bin_features_callback(msg);
             });
         
@@ -84,19 +84,19 @@ public:
     }
 
 private:
-    void bin_features_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
+    void bin_features_callback(const topological_msgs::msg::BinaryFeatures::SharedPtr msg) {
         auto callback_start = std::chrono::high_resolution_clock::now();
         
         // Convert binary features to active column indices
         std::vector<htm::UInt> activeColumnIndices;
-        for (size_t i = 0; i < msg->data.size() && i < 2048; ++i) {
-            if (msg->data[i] != 0) {
+        for (size_t i = 0; i < msg->bin_features.size() && i < 2048; ++i) {
+            if (msg->bin_features[i] != 0) {
                 activeColumnIndices.push_back(static_cast<htm::UInt>(i));
             }
         }
         
         RCLCPP_INFO(this->get_logger(), "Active columns count: %zu from total of %zu", 
-            activeColumnIndices.size(), msg->data.size());
+            activeColumnIndices.size(), msg->bin_features.size());
         
         // Create SDR for active columns
         std::vector<htm::UInt> columnDims = tm_->getColumnDimensions(); // {2048}
@@ -123,8 +123,9 @@ private:
                     activeCellsSparse.size(), total_cells);
         
         // Publish SDR
-        auto sdr_msg = std_msgs::msg::UInt32MultiArray();
-        sdr_msg.data = activeCellsSparse;
+        auto sdr_msg = topological_msgs::msg::SdrStamped();
+        sdr_msg.header = msg->header; // Preserve original header for synchronization
+        sdr_msg.sdr = activeCellsSparse;
         pub_sdr_->publish(sdr_msg);
         
         auto callback_end = std::chrono::high_resolution_clock::now();
@@ -157,8 +158,8 @@ private:
     std::unique_ptr<htm::TemporalMemory> tm_;
     
     // ROS2 publishers and subscribers
-    rclcpp::Publisher<std_msgs::msg::UInt32MultiArray>::SharedPtr pub_sdr_;
-    rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr sub_bin_features_;
+    rclcpp::Publisher<topological_msgs::msg::SdrStamped>::SharedPtr pub_sdr_;
+    rclcpp::Subscription<topological_msgs::msg::BinaryFeatures>::SharedPtr sub_bin_features_;
 };
 
 int main(int argc, char** argv) {

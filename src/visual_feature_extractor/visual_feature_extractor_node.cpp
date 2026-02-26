@@ -2,8 +2,9 @@
 #include <pybind11/numpy.h>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
+#include <topological_msgs/msg/visual_features.hpp>
 #include <memory>
 #include <string>
 #include <iostream>
@@ -53,8 +54,8 @@ public:
     // Initialize Python wrapper
     try {
       initialize_python(python_module_path, frame_stride, crop_image, 
-                       image_crop_x_min, image_crop_x_max,
-                       image_crop_y_min, image_crop_y_max);
+                        image_crop_x_min, image_crop_x_max,
+                        image_crop_y_min, image_crop_y_max);
       RCLCPP_INFO(this->get_logger(), "Python module initialized successfully!");
     } catch (const std::exception& e) {
       RCLCPP_ERROR(this->get_logger(), "Failed to initialize Python module: %s", e.what());
@@ -62,7 +63,7 @@ public:
     }
     
     // Create publisher for feature vectors
-    pub_features_ = this->create_publisher<std_msgs::msg::Float32MultiArray>(
+    pub_features_ = this->create_publisher<topological_msgs::msg::VisualFeatures>(
       topic_root + "/visual_features", 10);
     
     // Subscribe to image topics based on parameter
@@ -137,7 +138,7 @@ private:
       
       // Publish feature vector
       auto t_publish_start = std::chrono::high_resolution_clock::now();
-      publish_features(features_vector);
+      publish_features(img_msg->header, features_vector);
       auto t_publish_end = std::chrono::high_resolution_clock::now();
       
       auto t_total_end = std::chrono::high_resolution_clock::now();
@@ -184,7 +185,7 @@ private:
       
       // Publish feature vector
       auto t_publish_start = std::chrono::high_resolution_clock::now();
-      publish_features(features_vector);
+      publish_features(img_msg->header, features_vector);
       auto t_publish_end = std::chrono::high_resolution_clock::now();
       
       auto t_total_end = std::chrono::high_resolution_clock::now();
@@ -201,15 +202,16 @@ private:
     }
   }
   
-  void publish_features(const std::vector<float>& features)
+  void publish_features(const std_msgs::msg::Header& header, const std::vector<float>& features)
   {
-    auto msg = std_msgs::msg::Float32MultiArray();
-    msg.data = features;
+    auto msg = topological_msgs::msg::VisualFeatures();
+    msg.header = header;
+    msg.features = features;
     pub_features_->publish(msg);
   }
   
   // ROS2 publishers and subscribers
-  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_features_;
+  rclcpp::Publisher<topological_msgs::msg::VisualFeatures>::SharedPtr pub_features_;
   rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_compressed_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub_raw_;
   uint32_t counter_ = 0;  // For logging purposes

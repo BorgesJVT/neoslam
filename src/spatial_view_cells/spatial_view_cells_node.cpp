@@ -1,5 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/u_int32_multi_array.hpp>
+#include <topological_msgs/msg/sdr_stamped.hpp>
 #include <topological_msgs/msg/view_template.hpp>
 #include <roaring/roaring.hh>
 #include <memory>
@@ -44,9 +45,9 @@ public:
             topic_root + "/LocalView/Template", 10);
         
         // Subscribe to SDR
-        sub_sdr_ = this->create_subscription<std_msgs::msg::UInt32MultiArray>(
+        sub_sdr_ = this->create_subscription<topological_msgs::msg::SdrStamped>(
             topic_root + "/sdr", 10,
-            [this](const std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+            [this](const topological_msgs::msg::SdrStamped::SharedPtr msg) {
                 this->sdr_callback(msg);
             });
         
@@ -54,10 +55,10 @@ public:
     }
 
 private:
-    void sdr_callback(const std_msgs::msg::UInt32MultiArray::SharedPtr msg) {
+    void sdr_callback(const topological_msgs::msg::SdrStamped::SharedPtr msg) {
         auto callback_start = std::chrono::high_resolution_clock::now();
         
-        const std::vector<uint32_t>& activeCellsSparse = msg->data;
+        const std::vector<uint32_t>& activeCellsSparse = msg->sdr;
         
         // Create Roaring Bitmap from active cell indices
         Roaring sdr_sparse_bitmap;
@@ -76,7 +77,7 @@ private:
         
         // Create and publish ViewTemplate message
         auto vt_msg = std::make_shared<topological_msgs::msg::ViewTemplate>();
-        vt_msg->header.stamp = this->now();
+        vt_msg->header.stamp = msg->header.stamp; // Use the same timestamp as the image message to publish futher in the experience map
         vt_msg->current_id = template_id;
         // vt_msg->relative_rad = lv_->get_relative_rad();
         
@@ -99,7 +100,7 @@ private:
     
     // ROS2 publishers and subscribers
     rclcpp::Publisher<topological_msgs::msg::ViewTemplate>::SharedPtr pub_vt_;
-    rclcpp::Subscription<std_msgs::msg::UInt32MultiArray>::SharedPtr sub_sdr_;
+    rclcpp::Subscription<topological_msgs::msg::SdrStamped>::SharedPtr sub_sdr_;
 };
 
 int main(int argc, char** argv) {
