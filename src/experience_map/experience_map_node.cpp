@@ -162,7 +162,7 @@ private:
     switch (action->action)
     {
       case topological_msgs::msg::TopologicalAction::CREATE_NODE:
-        em->on_create_experience(action->dest_id);
+        em->on_create_experience(action->dest_id, action->header.stamp.sec, action->header.stamp.nanosec);
         em->on_set_experience(action->dest_id, 0);
         break;
 
@@ -179,7 +179,7 @@ private:
     em->iterate();
 
     geometry_msgs::msg::PoseStamped pose_output;
-    pose_output.header.stamp = this->now();
+    pose_output.header.stamp = action->header.stamp;
     pose_output.header.frame_id = "1";
     pose_output.pose.position.x = em->get_experience(em->get_current_id())->x_m;
     pose_output.pose.position.y = em->get_experience(em->get_current_id())->y_m;
@@ -196,19 +196,20 @@ private:
       prev_pub_time = rclcpp::Time(action->header.stamp);
 
       topological_msgs::msg::TopologicalMap em_map;
-      em_map.header.stamp = this->now();
+      em_map.header.stamp = action->header.stamp;
       em_map.node_count = em->get_num_experiences();
       em_map.node.resize(em->get_num_experiences());
       
       for (int i = 0; i < em->get_num_experiences(); i++)
       {
         em_map.node[i].id = em->get_experience(i)->id;
-        em_map.node[i].pose.position.x = em->get_experience(i)->x_m;
-        em_map.node[i].pose.position.y = em->get_experience(i)->y_m;
-        
+        em_map.node[i].pose.pose.position.x = em->get_experience(i)->x_m;
+        em_map.node[i].pose.pose.position.y = em->get_experience(i)->y_m;
+        em_map.node[i].pose.header.stamp.sec = em->get_experience(i)->seconds;
+        em_map.node[i].pose.header.stamp.nanosec = em->get_experience(i)->nanoseconds;
         tf2::Quaternion q;
         q.setRPY(0, 0, em->get_experience(i)->th_rad);
-        em_map.node[i].pose.orientation = tf2::toMsg(q);
+        em_map.node[i].pose.pose.orientation = tf2::toMsg(q);
       }
 
       em_map.edge_count = em->get_num_links();
@@ -216,6 +217,7 @@ private:
       
       for (int i = 0; i < em->get_num_links(); i++)
       {
+        em_map.edge[i].id = i;
         em_map.edge[i].source_id = em->get_link(i)->exp_from_id;
         em_map.edge[i].destination_id = em->get_link(i)->exp_to_id;
         em_map.edge[i].duration = rclcpp::Duration::from_seconds(em->get_link(i)->delta_time_s);

@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
-#include <std_msgs/msg/u_int8_multi_array.hpp>
+#include <topological_msgs/msg/visual_features.hpp>
+#include <topological_msgs/msg/binary_features.hpp>
 #include <eigen3/Eigen/Dense>
 #include <memory>
 #include <iostream>
@@ -31,13 +31,13 @@ public:
         load_random_matrix(random_matrix_path);
         
         // Create publisher for binary features
-        pub_bin_features_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(
+        pub_bin_features_ = this->create_publisher<topological_msgs::msg::BinaryFeatures>(
             topic_root + "/bin_features", 10);
         
         // Subscribe to visual features
-        sub_visual_features_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
+        sub_visual_features_ = this->create_subscription<topological_msgs::msg::VisualFeatures>(
             topic_root + "/visual_features", 10,
-            [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+            [this](const topological_msgs::msg::VisualFeatures::SharedPtr msg) {
                 this->visual_features_callback(msg);
             });
         
@@ -45,11 +45,11 @@ public:
     }
 
 private:
-    void visual_features_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+    void visual_features_callback(const topological_msgs::msg::VisualFeatures::SharedPtr msg) {
         auto callback_start = std::chrono::high_resolution_clock::now();
 
         // Get feature vector from message
-        const std::vector<float>& features_vector = msg->data;
+        const std::vector<float>& features_vector = msg->features;
         
         if (features_vector.size() != FEATURE_DIM) {
             RCLCPP_ERROR(this->get_logger(), 
@@ -62,11 +62,13 @@ private:
         std::array<bool, 2048> bin_features = get_lsbh(features_vector, 0.25);
 
         // Publish binary features
-        auto bin_features_msg = std_msgs::msg::UInt8MultiArray();
-        bin_features_msg.data.reserve(2048);
+        auto bin_features_msg = topological_msgs::msg::BinaryFeatures();
+        bin_features_msg.bin_features.reserve(2048); 
         for (const auto& bit : bin_features) {
-            bin_features_msg.data.push_back(bit ? 1 : 0);
+            bin_features_msg.bin_features.push_back(bit ? 1 : 0); 
         }
+
+        bin_features_msg.header = msg->header; // Preserve original header for synchronization
         
         // Count and log active bits
         int active_bits = std::count(bin_features.begin(), bin_features.end(), true);
@@ -222,8 +224,8 @@ private:
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> random_matrix_;
     
     // ROS2 publishers and subscribers
-    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr pub_bin_features_;
-    rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_visual_features_;
+    rclcpp::Publisher<topological_msgs::msg::BinaryFeatures>::SharedPtr pub_bin_features_;
+    rclcpp::Subscription<topological_msgs::msg::VisualFeatures>::SharedPtr sub_visual_features_;
     uint16_t counter_ = 0;  // For debugging and logging purposes
 };
 
