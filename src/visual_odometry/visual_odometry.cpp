@@ -27,7 +27,7 @@
  */
 
 #include "visual_odometry.h"
-#include "../utils/utils.h"
+// #include "../utils/utils.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>

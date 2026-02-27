@@ -191,30 +191,33 @@ ament_target_dependencies(experience_map_node
   topological_msgs
 )
 
-# # visual_odometry_node executable
-# add_executable(visual_odometry_node 
-#   src/visual_odometry/visual_odometry_node.cpp)
-# target_link_libraries(visual_odometry_node
-#   neoslam
-#   ${IRRLICHT_LIBRARIES}
-#   ${OPENGL_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-# )
+# visual_odometry_node executable
+add_executable(visual_odometry_node 
+  src/visual_odometry/visual_odometry_node.cpp
+  src/visual_odometry/visual_odometry.cpp)
+  target_include_directories(visual_odometry_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/visual_odometry
+)
+target_link_libraries(visual_odometry_node
+  ${IRRLICHT_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
 
-# ament_target_dependencies(visual_odometry_node
-#   rclcpp
-#   std_msgs
-#   sensor_msgs
-#   nav_msgs
-#   geometry_msgs
-#   visualization_msgs
-#   tf2
-#   tf2_ros
-#   tf2_geometry_msgs
-#   image_transport
-#   cv_bridge
-#   topological_msgs
-# )
+ament_target_dependencies(visual_odometry_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  nav_msgs
+  geometry_msgs
+  visualization_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  image_transport
+  cv_bridge
+  topological_msgs
+)
 
 # Install targets
 # install(TARGETS neoslam
@@ -230,7 +233,7 @@ install(TARGETS
   spatial_view_cells_node 
   pose_cells_node 
   experience_map_node 
-  # visual_odometry_node
+  visual_odometry_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
