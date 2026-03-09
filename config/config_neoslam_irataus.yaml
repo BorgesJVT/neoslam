@@ -28,8 +28,8 @@ neocortex_node:
 spatial_view_cells_node:
   ros__parameters:
     theta_alpha: 384
-    theta_rho: 3
-    score_interval: 470
+    theta_rho: 6
+    score_interval: 485
     exclude_recent_intervals: 3
 
 pose_cells_node:
@@ -37,6 +37,7 @@ pose_cells_node:
     pc_dim_xy: 11
     pc_vt_inject_energy: 0.1
     pc_cell_x_size: 0.015
+    exp_delta_pc_threshold: 5.0
     # draw
     enable: true
 

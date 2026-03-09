@@ -1,6 +1,10 @@
 visual_feature_extractor_node:
   ros__parameters:
     use_compressed: false
+    # image_crop_x_min: 40
+    # image_crop_x_max: 600
+    # image_crop_y_min: 150
+    # image_crop_y_max: 300
 
 neocortex_node:
   ros__parameters:
@@ -22,28 +26,13 @@ neocortex_node:
 spatial_view_cells_node:
   ros__parameters:
     theta_alpha: 384
-    theta_rho: 6
-    score_interval: 470
-    exclude_recent_intervals: 3
-
-visual_odometry_node:
-  ros__parameters:
-    vtrans_image_x_min: 195
-    vtrans_image_x_max: 475
-    vtrans_image_y_min: 270
-    vtrans_image_y_max: 430
-    vrot_image_x_min: 40   # Upper area for rotation
-    vrot_image_x_max: 600
-    vrot_image_y_min: 75
-    vrot_image_y_max: 240
-    camera_fov_deg: 180.0  # Horizontal FOV of Intel Realsense d435
-    camera_hz: 0.20
-    vtrans_scaling: 6.0
-    vtrans_max: 0.5
+    theta_rho: 3
+    score_interval: 410
+    exclude_recent_intervals: 20
 
 pose_cells_node:
   ros__parameters:
-    pc_dim_xy: 30
+    pc_dim_xy: 18
     pc_dim_th: 36
     pc_w_e_dim: 7
     pc_w_i_dim: 5
@@ -51,8 +40,8 @@ pose_cells_node:
     pc_w_i_var: 2
     pc_global_inhib: 0.00002
     vt_active_decay: 1.0
-    pc_vt_inject_energy: 0.15
-    pc_cell_x_size: 0.03
+    pc_vt_inject_energy: 0.2
+    pc_cell_x_size: 1.0
     exp_delta_pc_threshold: 2.0
     pc_vt_restore: 0.05
     # draw
@@ -61,10 +50,8 @@ pose_cells_node:
 experience_map_node:
   ros__parameters:
     exp_correction: 0.5
-    exp_loops: 10
-    exp_initial_em_deg: 0.0
-    max_goals: 10
+    exp_loops: 50
+    exp_initial_em_deg: 180.0
     # draw
     enable: true
-
 
