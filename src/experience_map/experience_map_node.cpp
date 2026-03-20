@@ -19,6 +19,37 @@
 #include "experience_map_scene.h"
 #endif
 
+/**
+ * @brief ExperienceMapNode - Topological map building and path planning
+ * 
+ * This ROS2 node maintains a topological map (experience map) of the robot's trajectory
+ * as a graph of experiences (nodes) connected by links (edges). It receives actions from
+ * the pose cell network to create nodes, create edges, or relocalize. The map is
+ * continuously refined using an iterative relaxation algorithm to correct accumulated
+ * odometry drift. The node also supports goal-directed navigation by computing shortest
+ * paths through the experience graph.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/odom: Receives odometry for dead reckoning between experiences
+ *   - <topic_root>/PoseCell/TopologicalAction: Receives actions to update the experience map
+ *   - <topic_root>/ExperienceMap/SetGoalPose: Receives goal poses for navigation
+ * 
+ * Publications:
+ *   - <topic_root>/ExperienceMap/Map: Publishes complete topological map (periodic)
+ *   - <topic_root>/ExperienceMap/MapMarker: Publishes visualization markers for RViz
+ *   - <topic_root>/ExperienceMap/RobotPose: Publishes current robot pose in map frame
+ *   - <topic_root>/ExperienceMap/PathToGoal: Publishes planned path to goal
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - exp_correction: Correction rate for map relaxation algorithm (default: 0.5)
+ *   - exp_loops: Number of relaxation iterations per update (default: 10)
+ *   - exp_initial_em_deg: Initial heading in degrees for first experience (default: 90.0)
+ *   - enable: Enable Irrlicht graphics visualization (default: true)
+ *   - exp_map_size: Size of visualization window (default: 500)
+ *   - media_path: Path to media resources for visualization
+ *   - image_file: Image file for visualization background
+ */
 class ExperienceMapNode : public rclcpp::Node
 {
 public:

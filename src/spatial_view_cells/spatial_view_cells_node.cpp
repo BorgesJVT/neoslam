@@ -10,6 +10,27 @@
 
 #include "local_view_match_with_intervals.hpp"
 
+/**
+ * @brief SpatialViewCellsNode - Visual place recognition and loop closure detection
+ * 
+ * This ROS2 node processes Sparse Distributed Representations (SDR) from visual features
+ * to recognize unique places (visual templates) and detect loop closures. It uses an
+ * interval-based matching algorithm with Roaring Bitmaps for efficient similarity 
+ * computation and memory usage.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/sdr: Receives SDR representations from visual features
+ * 
+ * Publications:
+ *   - <topic_root>/LocalView/Template: Publishes recognized visual template IDs
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - theta_alpha: Similarity threshold for extending intervals (default: 384 active bits)
+ *   - theta_rho: Maximum duration of an interval in frames (default: 3 frames)
+ *   - score_interval: Similarity threshold for loop closure detection (default: 470 matching bits)
+ *   - exclude_recent_intervals: Number of recent intervals to exclude from loop closure detection (default: 3)
+ */
 class SpatialViewCellsNode : public rclcpp::Node {
 public:
     explicit SpatialViewCellsNode()

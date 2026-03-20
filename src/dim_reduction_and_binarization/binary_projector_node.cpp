@@ -11,9 +11,28 @@
 #include <algorithm>
 #include <cmath>
 
-class BinaryProjector : public rclcpp::Node {
+/**
+ * @brief BinaryProjectorNode - Dimensionality reduction and binarization using LSBH
+ * 
+ * This ROS2 node implements Locality-Sensitive Binary Hashing (LSBH) to convert
+ * high-dimensional visual features (64,896 dimensions from AlexNet Conv3) into
+ * compact binary representations (2,048 bits). It uses random projection to reduce
+ * dimensionality while preserving similarity, enabling efficient storage and 
+ * comparison for visual place recognition.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/visual_features: Receives high-dimensional feature vectors
+ * 
+ * Publications:
+ *   - <topic_root>/bin_features: Publishes binary feature representations
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - random_matrix_path: Path to binary file containing random projection matrix (64896x1024)
+ */
+class BinaryProjectorNode : public rclcpp::Node {
 public:
-    explicit BinaryProjector()
+    explicit BinaryProjectorNode()
         : Node("binary_projector_node") {
         
         // Declare and get parameters
@@ -23,7 +42,7 @@ public:
         std::string topic_root = this->get_parameter("topic_root").as_string();
         std::string random_matrix_path = this->get_parameter("random_matrix_path").as_string();
         
-        RCLCPP_INFO(this->get_logger(), "BinaryProjector Parameters:");
+        RCLCPP_INFO(this->get_logger(), "BinaryProjectorNode Parameters:");
         RCLCPP_INFO(this->get_logger(), "  topic_root: %s", topic_root.c_str());
         RCLCPP_INFO(this->get_logger(), "  random_matrix_path: %s", random_matrix_path.c_str());
         
@@ -41,7 +60,7 @@ public:
                 this->visual_features_callback(msg);
             });
         
-        RCLCPP_INFO(this->get_logger(), "BinaryProjector initialized successfully!");
+        RCLCPP_INFO(this->get_logger(), "BinaryProjectorNode initialized successfully!");
     }
 
 private:
@@ -73,7 +92,7 @@ private:
         // Count and log active bits
         int active_bits = std::count(bin_features.begin(), bin_features.end(), true);
         RCLCPP_DEBUG(this->get_logger(), 
-                    "[BinaryProjector] Binary features: %d active bits out of %d", 
+                    "[BinaryProjectorNode] Binary features: %d active bits out of %d", 
                     active_bits, static_cast<int>(bin_features.size()));
         
         pub_bin_features_->publish(bin_features_msg);
@@ -233,7 +252,7 @@ int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
     
     try {
-        auto node = std::make_shared<BinaryProjector>();
+        auto node = std::make_shared<BinaryProjectorNode>();
         rclcpp::spin(node);
     } catch (const std::exception& e) {
         std::cerr << "Fatal error: " << e.what() << std::endl;

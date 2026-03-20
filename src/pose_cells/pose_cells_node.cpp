@@ -17,6 +17,41 @@ PosecellScene *pcs;
 bool use_graphics;
 #endif
 
+/**
+ * @brief PoseCellNode - Continuous attractor network for path integration
+ * 
+ * This ROS2 node implements a 3D continuous attractor network (pose cells) that
+ * performs path integration to estimate the robot's pose. It integrates odometry
+ * for dead reckoning and corrects drift using visual template matches. The pose
+ * cell activity represents a probability distribution over the robot's x, y, and
+ * heading (theta) in a local coordinate frame.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/odom: Receives odometry data for path integration
+ *   - <topic_root>/LocalView/Template: Receives visual template matches for correction
+ * 
+ * Publications:
+ *   - <topic_root>/PoseCell/TopologicalAction: Publishes actions for experience map updates
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - pc_dim_xy: Dimensions of pose cell network in x and y (default: 21)
+ *   - pc_dim_th: Dimensions of pose cell network in theta/heading (default: 36)
+ *   - pc_w_e_dim: Size of excitatory weight matrix dimension (default: 7)
+ *   - pc_w_i_dim: Size of inhibitory weight matrix dimension (default: 5)
+ *   - pc_w_e_var: Variance of excitatory weights (default: 1)
+ *   - pc_w_i_var: Variance of inhibitory weights (default: 2)
+ *   - pc_global_inhib: Global inhibition constant (default: 0.00002)
+ *   - vt_active_decay: Decay rate of visual template activation (default: 1.0)
+ *   - pc_vt_inject_energy: Energy injected into pose cells on template match (default: 0.15)
+ *   - pc_cell_x_size: Physical size represented by each x/y cell in meters (default: 1.0)
+ *   - exp_delta_pc_threshold: Pose change threshold for creating new experiences (default: 2.0)
+ *   - pc_vt_restore: Energy restoration factor for visual templates (default: 0.05)
+ *   - enable: Enable Irrlicht graphics visualization (default: true)
+ *   - posecells_size: Size of visualization window (default: 250)
+ *   - media_path: Path to media resources for visualization
+ *   - image_file: Image file for visualization background
+ */
 class PoseCellNode : public rclcpp::Node
 {
 public:

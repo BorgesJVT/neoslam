@@ -13,6 +13,33 @@
 
 namespace py = pybind11;
 
+/**
+ * @brief VisualFeatureExtractorNode - Deep learning feature extraction from camera images
+ * 
+ * This ROS2 node extracts high-dimensional visual features from camera images using
+ * a pre-trained AlexNet CNN (Conv3 layer output). It embeds a Python interpreter via
+ * PyBind11 to leverage PyTorch for GPU-accelerated feature extraction. The node supports
+ * both raw and compressed images, optional image cropping, and frame stride control
+ * for processing efficiency.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/camera/image/compressed: Receives compressed camera images
+ *   - <topic_root>/camera/image: Receives raw camera images (alternative)
+ * 
+ * Publications:
+ *   - <topic_root>/visual_features: Publishes 64,896-dimensional feature vectors
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - python_module_path: Path to Python module containing AlexNet feature extractor
+ *   - use_compressed: Use compressed (JPEG) images instead of raw images
+ *   - frame_stride: Process every Nth frame (1 = all frames)
+ *   - crop_image: Enable image cropping before feature extraction
+ *   - image_crop_x_min: Minimum X coordinate for image crop (pixels)
+ *   - image_crop_x_max: Maximum X coordinate for image crop (-1 = image width)
+ *   - image_crop_y_min: Minimum Y coordinate for image crop (pixels)
+ *   - image_crop_y_max: Maximum Y coordinate for image crop (-1 = image height)
+ */
 class VisualFeatureExtractorNode : public rclcpp::Node
 {
 public:

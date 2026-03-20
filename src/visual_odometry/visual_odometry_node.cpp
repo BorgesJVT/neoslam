@@ -3,7 +3,6 @@
 #include <functional>
 using namespace std;
 
-#include "utils/utils.h"
 #include "ratslam/visual_odometry.h"
 
 #include <rclcpp/rclcpp.hpp>
@@ -19,6 +18,37 @@ using namespace std;
 
 using namespace ratslam;
 
+/**
+ * @brief VisualOdometryNode - Vision-based motion estimation from camera images
+ * 
+ * This ROS2 node estimates robot motion (linear and angular velocity) by analyzing
+ * sequential camera images. It uses optical flow techniques on specific image regions
+ * to compute visual odometry: translation is estimated from the bottom portion of the
+ * image (ground plane), while rotation is estimated from the full image. This provides
+ * an alternative or complement to wheel odometry, especially useful for robots with
+ * poor wheel encoders or on slippery terrain.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/camera/image/compressed: Receives compressed camera images (JPEG)
+ * 
+ * Publications:
+ *   - <topic_root>/odom: Publishes estimated odometry (linear and angular velocity)
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - vtrans_image_x_min: Min X coordinate for translation estimation region (default: 0)
+ *   - vtrans_image_x_max: Max X coordinate for translation estimation region (-1 = image width)
+ *   - vtrans_image_y_min: Min Y coordinate for translation estimation region (default: 0)
+ *   - vtrans_image_y_max: Max Y coordinate for translation estimation region (-1 = image height)
+ *   - vrot_image_x_min: Min X coordinate for rotation estimation region (default: 0)
+ *   - vrot_image_x_max: Max X coordinate for rotation estimation region (-1 = image width)
+ *   - vrot_image_y_min: Min Y coordinate for rotation estimation region (default: 0)
+ *   - vrot_image_y_max: Max Y coordinate for rotation estimation region (-1 = image height)
+ *   - camera_fov_deg: Camera horizontal field of view in degrees (default: 50.0)
+ *   - camera_hz: Camera frame rate in Hz for velocity scaling (default: 10.0)
+ *   - vtrans_scaling: Scaling factor for translation velocity (default: 100.0)
+ *   - vtrans_max: Maximum translation velocity in m/s (default: 20.0)
+ */
 class VisualOdometryNode : public rclcpp::Node
 {
 public:

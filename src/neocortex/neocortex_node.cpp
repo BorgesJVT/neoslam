@@ -10,6 +10,36 @@
 #include "htm/algorithms/TemporalMemory.hpp"
 #include "htm/types/Sdr.hpp"
 
+/**
+ * @brief NeocortexNode - Hierarchical Temporal Memory for temporal sequence learning
+ * 
+ * This ROS2 node implements HTM's Temporal Memory algorithm to learn temporal sequences
+ * in visual feature patterns. It processes binary features and outputs Sparse Distributed
+ * Representations (SDR) of winner cells, encoding both current sensory input and temporal
+ * context. This enables the system to learn and predict sequences of visual experiences.
+ * 
+ * Subscriptions:
+ *   - <topic_root>/bin_features: Receives binary feature vectors from visual processing
+ * 
+ * Publications:
+ *   - <topic_root>/sdr: Publishes SDR representations with temporal context
+ * 
+ * Parameters:
+ *   - topic_root: Base topic namespace for all subscriptions and publications
+ *   - tm_column_dimensions: Number of columns in the Temporal Memory (default: 2048)
+ *   - tm_cells_per_column: Number of cells per column (default: 32)
+ *   - tm_activation_threshold: Min active synapses to activate a segment (default: 4)
+ *   - tm_initial_permanence: Initial permanence value for new synapses (default: 0.55)
+ *   - tm_connected_permanence: Permanence threshold for connected synapses (default: 0.5)
+ *   - tm_min_threshold: Min active synapses to grow new synapses (default: 1)
+ *   - tm_max_new_synapse_count: Max new synapses per segment per step (default: 20)
+ *   - tm_permanence_increment: Permanence increase for active synapses (default: 0.01)
+ *   - tm_permanence_decrement: Permanence decrease for inactive synapses (default: 0.01)
+ *   - tm_predicted_segment_decrement: Permanence decrease for segments in predicted inactive columns (default: 0.0005)
+ *   - tm_max_segments_per_cell: Maximum number of segments per cell (default: 100)
+ *   - tm_max_synapses_per_segment: Maximum number of synapses per segment (default: 100)
+ *   - tm_seed: Random seed for reproducibility (default: 42)
+ */
 class NeocortexNode : public rclcpp::Node {
 public:
     explicit NeocortexNode()
