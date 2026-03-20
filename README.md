@@ -1,85 +1,188 @@
-# ratslam
+# neoslam
 
-This package is a port of the original [ratslam_ros](https://openslam-org.github.io/openratslam.html) repository to ROS 2 (tested on ROS 2 Rolling).
+This package is a bio-inspired SLAM system for ROS 2 (tested on ROS 2 Rolling) that combines deep learning visual features, Hierarchical Temporal Memory (HTM), and topological mapping for robust simultaneous localization and mapping.
+
+## Overview
+
+neoslam implements a complete visual SLAM pipeline with the following components:
+
+- **Visual Feature Extractor**: Extracts deep features from camera images using AlexNet (PyTorch)
+- **Binary Projector**: Reduces dimensionality using Locality-Sensitive Binary Hashing (LSBH)
+- **Neocortex (HTM)**: Learns temporal sequences using Hierarchical Temporal Memory
+- **Spatial View Cells**: Performs visual place recognition and loop closure detection
+- **Pose Cells**: Maintains pose estimation through continuous attractor network dynamics
+- **Experience Map**: Builds and maintains a topological map with iterative refinement
 
 ## Dependencies
 
-In addition to standard ROS 2 dependencies, this package **requires the custom `topological_msgs` package**. Make sure it is available and built in your workspace before building `ratslam`.
+In addition to standard ROS 2 dependencies, this package requires:
 
-Main dependencies:
+### ROS 2 Packages
 - `rclcpp`
-- `topological_msgs` (custom)
-- `cv_bridge`
+- `std_msgs`
 - `sensor_msgs`
 - `geometry_msgs`
 - `nav_msgs`
 - `visualization_msgs`
 - `tf2_ros`
+- `tf2_geometry_msgs`
+- `cv_bridge`
 - `image_transport`
-- `Boost` (component `serialization`)
-- `OpenCV`
-- `Irrlicht`
-- `OpenGL`
+- `topological_msgs` (custom package - must be installed separately)
+
+### System Libraries
+- `OpenCV` (for image processing)
+- `Eigen3` (for matrix operations)
+- `Boost` (serialization component for HTM)
+- `Irrlicht` (optional, for 3D visualization)
+- `OpenGL` (optional, for visualization)
+- `PyTorch` with CUDA (for deep learning feature extraction)
+- `PyBind11` (for Python-C++ integration)
+- `Roaring Bitmaps` (for efficient sparse representation)
 
 ## Installation
 
+### 1. Install System Dependencies
 
-1. **Clone the `ratslam` and `topological_msgs` repositories into your workspace:**
+You can use the provided installation script:
 
-   ```bash
-   cd ~/rolling_ws/src
-   git clone https://github.com/BorgesJVT/ratslam.git
-   git clone https://github.com/BorgesJVT/topological_msgs.git
-   ```
+```bash
+cd ~/ros2_ws/src/neoslam
+chmod +x install_dependencies.sh
+./install_dependencies.sh
+```
 
-2. **Install system dependencies:**
+Or install manually:
 
-   ```bash
-   sudo apt update
-   sudo apt install ros-rolling-cv-bridge ros-rolling-sensor-msgs ros-rolling-geometry-msgs ros-rolling-nav-msgs ros-rolling-visualization-msgs ros-rolling-tf2-ros ros-rolling-image-transport libboost-all-dev libopencv-dev libirrlicht-dev libopengl-dev
-   ```
+```bash
+sudo apt update
+sudo apt install -y \
+    ros-rolling-cv-bridge \
+    ros-rolling-image-transport \
+    ros-rolling-image-transport-plugins \
+    ros-rolling-tf2-geometry-msgs \
+    ros-rolling-vision-opencv \
+    libopencv-dev \
+    libboost-all-dev \
+    libirrlicht-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    libeigen3-dev \
+    python3-opencv \
+    python3-pip
+```
 
-3. **Build the workspace:**
+### 2. Install Python Dependencies
 
-   ```bash
-   cd ~/rolling_ws
-   source /opt/ros/rolling/setup.bash
-   colcon build
-   ```
+```bash
+pip3 install torch torchvision pybind11 numpy
+```
 
-4. **Source the workspace:**
+### 3. Clone Required Repositories
 
-   ```bash
-   source ~/rolling_ws/install/setup.bash
-   ```
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/BorgesJVT/neoslam.git
+git clone https://github.com/BorgesJVT/topological_msgs.git
+```
+
+### 4. Generate Random Projection Matrix
+
+The binary projector requires a random projection matrix. Generate it with:
+
+```bash
+cd ~/ros2_ws/src/neoslam/src/dim_reduction_and_binarization/random_matrix
+python3 generate_random_matrix.py --rows 64896 --cols 1024 --output randomMatrix.bin
+```
+
+### 5. Build the Workspace
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/rolling/setup.bash
+colcon build --packages-select topological_msgs neoslam
+```
+
+### 6. Source the Workspace
+
+```bash
+source ~/ros2_ws/install/setup.bash
+```
 
 ## Usage
-To use this package with your datasets, first convert the dataset to a ROS 2 bag format, if necessary. Access the datasets google drive link https://drive.google.com/drive/folders/1ggAxMzIyadmenUPoAon2rL8gvJvuv75K?usp=drive_link for examples.
 
-First, run your dataset launch file, for example:
+### Basic Launch
 
-```bash
-ros2 launch ratslam irataus.launch.py use_sim_time:=true
-```
+neoslam provides launch files for different datasets:
 
 ```bash
-ros2 launch ratslam oxford_newcollege.launch.py use_sim_time:=true
+# For iratAUS dataset
+ros2 launch neoslam irataus.launch.py use_sim_time:=true
+
+# For Robotarium dataset
+ros2 launch neoslam robotarium.launch.py use_sim_time:=true
 ```
+
+### Playing Dataset Bags
+
+In a separate terminal, play your ROS 2 bag file:
 
 ```bash
-ros2 launch ratslam stlucia.launch.py use_sim_time:=true
+# For iratAUS dataset
+ros2 bag play data/irat_aus_28112011.db3 --rate 1.0 --clock --start-paused
+
+# Adjust rate as needed (1.0 = real-time, 2.0 = 2x speed, etc.)
 ```
 
-In another terminal, run your bag:
+## Configuration
 
-```bash
-ros2 bag play data/irat_aus_28112011/irat_aus_28112011.db3 --rate 1.0 --clock --start-paused --topics /irat_red/odom /irat_red/camera/image/compressed
+Configuration files are located in the `config/` directory:
+
+- `config_neoslam_irataus.yaml`: Configuration for iratAUS dataset
+- `config_neoslam_robotarium.yaml`: Configuration for Robotarium dataset
+
+Key parameters include:
+
+- **Visual Feature Extractor**: Image cropping, frame stride, AlexNet model path
+- **Binary Projector**: Random matrix path, LSBH parameters
+- **Neocortex (HTM)**: Temporal memory parameters (columns, cells, thresholds)
+- **Spatial View Cells**: Loop closure thresholds, interval parameters
+- **Pose Cells**: Network dimensions, attractor dynamics parameters
+- **Experience Map**: Relaxation parameters, map correction rates
+
+## Architecture
+
+```
+Camera Images → Visual Feature Extractor (AlexNet)
+                      ↓
+                Binary Projector (LSBH)
+                      ↓
+                Neocortex (HTM Temporal Memory)
+                      ↓
+                Spatial View Cells (Loop Closure)
+                      ↓
+Odometry → Pose Cells (Path Integration) → Experience Map (Topological SLAM)
 ```
 
-```bash
-ros2 bag play data/oxford_newcollege/oxford_newcollege.db3 --rate 1.0 --clock --start-paused --topics /newcollege/odom /newcollege/camera/image/compressed
+## Citation
+
+If you use this package in your research, please cite:
+
+```bibtex
+@software{neoslam2024,
+  author = {Borges, João Victor Torres and Pizzino, Alexandre},
+  title = {neoslam: Bio-inspired SLAM with Deep Learning and HTM},
+  year = {2024},
+  url = {https://github.com/BorgesJVT/neoslam}
+}
 ```
 
-```bash
-ros2 bag play data/stlucia_2007/stlucia_2007.db3 --rate 1.0 --clock --start-paused --topics /stlucia/camera/image/compressed
-```
+## License
+
+This project is licensed under the BSD License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Based on concepts from RatSLAM by Michael Milford and Gordon Wyeth
+- HTM implementation adapted from Numenta's htm.core
+- Deep learning feature extraction using PyTorch and AlexNet
