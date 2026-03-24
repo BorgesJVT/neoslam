@@ -45,46 +45,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma")  # Enable AVX2 and FMA fo
 add_definitions(-DEIGEN_NO_DEBUG)           # Disable Eigen debug checks
 add_definitions(-DEIGEN_DONT_PARALLELIZE)   # Single-threaded (faster for small ops)
 
-# include_directories(
-#   ${CMAKE_CURRENT_SOURCE_DIR}/src
-#   ${CMAKE_CURRENT_SOURCE_DIR}/src/neocortex
-#   ${CMAKE_CURRENT_SOURCE_DIR}/src/spatial_view_cells
-#   ${Python3_INCLUDE_DIRS}
-#   ${pybind11_INCLUDE_DIRS}
-# )
-
-# neoslam library
-# add_library(neoslam 
-#   src/experience_map/experience_map.cpp 
-#   src/pose_cells/posecell_network.cpp 
-#   src/visual_odometry/visual_odometry.cpp
-# )
-
-# target_include_directories(neoslam PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-#   $<INSTALL_INTERFACE:include>
-# )
-
-# ament_target_dependencies(neoslam
-#   rclcpp
-#   std_msgs
-#   sensor_msgs
-#   nav_msgs
-#   geometry_msgs
-#   visualization_msgs
-#   tf2
-#   tf2_ros
-#   tf2_geometry_msgs
-#   image_transport
-#   cv_bridge
-#   topological_msgs
-# )
-
-# target_link_libraries(neoslam
-#   ${OpenCV_LIBRARIES}
-#   ${Boost_LIBRARIES}
-# )
-
 # uncomment if you don't have irrlicht installed
 add_definitions("-DHAVE_IRRLICHT")
 
@@ -104,7 +64,6 @@ ament_target_dependencies(visual_feature_extractor_node
   rclcpp
   std_msgs
   sensor_msgs
-  cv_bridge
   topological_msgs
 )
 
@@ -116,7 +75,6 @@ target_include_directories(binary_projector_node PRIVATE
 )
 ament_target_dependencies(binary_projector_node
   rclcpp
-  std_msgs
   topological_msgs
 )
 
@@ -131,7 +89,6 @@ target_link_libraries(neocortex_node
 )
 ament_target_dependencies(neocortex_node
   rclcpp
-  std_msgs
   topological_msgs
 )
 
@@ -191,37 +148,23 @@ ament_target_dependencies(experience_map_node
   topological_msgs
 )
 
-# # visual_odometry_node executable
-# add_executable(visual_odometry_node 
-#   src/visual_odometry/visual_odometry_node.cpp)
-# target_link_libraries(visual_odometry_node
-#   neoslam
-#   ${IRRLICHT_LIBRARIES}
-#   ${OPENGL_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-# )
+# visual_odometry_node executable
+add_executable(visual_odometry_node 
+  src/visual_odometry/visual_odometry_node.cpp
+  src/visual_odometry/visual_odometry.cpp)
+target_include_directories(visual_odometry_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/visual_odometry
+)
+target_link_libraries(visual_odometry_node
+  ${OpenCV_LIBRARIES}
+)
 
-# ament_target_dependencies(visual_odometry_node
-#   rclcpp
-#   std_msgs
-#   sensor_msgs
-#   nav_msgs
-#   geometry_msgs
-#   visualization_msgs
-#   tf2
-#   tf2_ros
-#   tf2_geometry_msgs
-#   image_transport
-#   cv_bridge
-#   topological_msgs
-# )
-
-# Install targets
-# install(TARGETS neoslam
-#   ARCHIVE DESTINATION lib
-#   LIBRARY DESTINATION lib
-#   RUNTIME DESTINATION bin
-# )
+ament_target_dependencies(visual_odometry_node
+  rclcpp
+  sensor_msgs
+  nav_msgs
+  topological_msgs
+)
 
 install(TARGETS 
   visual_feature_extractor_node
@@ -230,7 +173,7 @@ install(TARGETS
   spatial_view_cells_node 
   pose_cells_node 
   experience_map_node 
-  # visual_odometry_node
+  visual_odometry_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

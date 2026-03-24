@@ -2,7 +2,9 @@
 
 This package is a bio-inspired SLAM system for ROS 2 (tested on ROS 2 Rolling) that combines deep learning visual features, Hierarchical Temporal Memory (HTM), and topological mapping for robust simultaneous localization and mapping.
 
-## Overview
+## System Overview
+
+![neoslam Architecture](neoslam_arch.png)
 
 neoslam implements a complete visual SLAM pipeline with the following components:
 
@@ -120,7 +122,7 @@ neoslam provides launch files for different datasets:
 ros2 launch neoslam irataus.launch.py use_sim_time:=true
 
 # For Robotarium dataset
-ros2 launch neoslam robotarium.launch.py use_sim_time:=true
+# ros2 launch neoslam robotarium.launch.py use_sim_time:=true
 ```
 
 ### Playing Dataset Bags
@@ -134,7 +136,7 @@ ros2 bag play data/irat_aus_28112011.db3 --rate 1.0 --clock --start-paused
 # Adjust rate as needed (1.0 = real-time, 2.0 = 2x speed, etc.)
 ```
 
-## Configuration
+<!-- ## Configuration
 
 Configuration files are located in the `config/` directory:
 
@@ -148,41 +150,4 @@ Key parameters include:
 - **Neocortex (HTM)**: Temporal memory parameters (columns, cells, thresholds)
 - **Spatial View Cells**: Loop closure thresholds, interval parameters
 - **Pose Cells**: Network dimensions, attractor dynamics parameters
-- **Experience Map**: Relaxation parameters, map correction rates
-
-## Architecture
-
-```
-Camera Images → Visual Feature Extractor (AlexNet)
-                      ↓
-                Binary Projector (LSBH)
-                      ↓
-                Neocortex (HTM Temporal Memory)
-                      ↓
-                Spatial View Cells (Loop Closure)
-                      ↓
-Odometry → Pose Cells (Path Integration) → Experience Map (Topological SLAM)
-```
-
-## Citation
-
-If you use this package in your research, please cite:
-
-```bibtex
-@software{neoslam2024,
-  author = {Borges, João Victor Torres and Pizzino, Alexandre},
-  title = {neoslam: Bio-inspired SLAM with Deep Learning and HTM},
-  year = {2024},
-  url = {https://github.com/BorgesJVT/neoslam}
-}
-```
-
-## License
-
-This project is licensed under the BSD License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Based on concepts from RatSLAM by Michael Milford and Gordon Wyeth
-- HTM implementation adapted from Numenta's htm.core
-- Deep learning feature extraction using PyTorch and AlexNet
+- **Experience Map**: Relaxation parameters, map correction rates -->
