@@ -3,7 +3,7 @@
 #include <functional>
 using namespace std;
 
-#include "ratslam/visual_odometry.h"
+#include "visual_odometry.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -12,11 +12,6 @@ using namespace std;
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-#include <cv_bridge/cv_bridge.hpp>
-#include <image_transport/image_transport.hpp>
-
-using namespace ratslam;
 
 /**
  * @brief VisualOdometryNode - Vision-based motion estimation from camera images
@@ -86,7 +81,7 @@ public:
     double vtrans_max = this->get_parameter("vtrans_max").as_double();
 
     // Create VisualOdometry object with individual parameters
-    vo = new ratslam::VisualOdometry(
+    vo = new VisualOdometry(
       vtrans_image_x_min, vtrans_image_x_max,
       vtrans_image_y_min, vtrans_image_y_max,
       vrot_image_x_min, vrot_image_x_max,
@@ -147,7 +142,7 @@ private:
     pub_vo->publish(odom_output);
   }
 
-  ratslam::VisualOdometry* vo = nullptr;
+  VisualOdometry* vo = nullptr;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_vo;
   rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub;
 };
@@ -155,13 +150,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-
-  std::cout << argv[0] << " - openRatSLAM Copyright (C) 2012 David Ball and Scott Heath" << std::endl;
-  std::cout << "RatSLAM algorithm by Michael Milford and Gordon Wyeth" << std::endl;
-  std::cout << "Distributed under the GNU GPL v3, see the included license file." << std::endl;
-
   auto node = std::make_shared<VisualOdometryNode>();
-
   rclcpp::spin(node);
   rclcpp::shutdown();
 
