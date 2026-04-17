@@ -49,9 +49,11 @@ public:
     RCLCPP_INFO(this->get_logger(), "  topic_root: %s", topic_root.c_str());
     RCLCPP_INFO(this->get_logger(), "  pc_dim_xy: %ld", this->get_parameter("pc_dim_xy").as_int());
     RCLCPP_INFO(this->get_logger(), "  pc_dim_th: %ld", this->get_parameter("pc_dim_th").as_int());
+    RCLCPP_INFO(this->get_logger(), "  vt_active_decay: %f", this->get_parameter("vt_active_decay").as_double());
     RCLCPP_INFO(this->get_logger(), "  pc_vt_inject_energy: %f", this->get_parameter("pc_vt_inject_energy").as_double());
     RCLCPP_INFO(this->get_logger(), "  pc_cell_x_size: %f", this->get_parameter("pc_cell_x_size").as_double());
     RCLCPP_INFO(this->get_logger(), "  exp_delta_pc_threshold: %f", this->get_parameter("exp_delta_pc_threshold").as_double());
+    RCLCPP_INFO(this->get_logger(), "  pc_vt_restore: %f", this->get_parameter("pc_vt_restore").as_double());
     
     // Create PosecellNetwork with parameters
     pc = new PosecellNetwork(
