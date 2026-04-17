@@ -59,9 +59,14 @@ public:
       topic_root + "/ExperienceMap/RobotPose", 10);
     pub_goal_path = this->create_publisher<nav_msgs::msg::Path>(
       topic_root + "/ExperienceMap/PathToGoal", 10);
-    
+
+    rclcpp::QoS flexible_qos(10);
+    flexible_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+    // Aceita BEST_EFFORT
+    // Mas também funciona com RELIABLE devido à compatibilidade
+
     sub_odometry = this->create_subscription<nav_msgs::msg::Odometry>(
-      topic_root + "/odom", 10,
+      topic_root + "/odom", flexible_qos,
       std::bind(&ExperienceMapNode::odo_callback, this, std::placeholders::_1));
     
     sub_action = this->create_subscription<topological_msgs::msg::TopologicalAction>(
