@@ -23,7 +23,7 @@ spatial_view_cells_node:
   ros__parameters:
     theta_alpha: 384
     theta_rho: 3
-    score_interval: 450
+    score_interval: 440
     exclude_recent_intervals: 30
     # draw
     enable: true
@@ -55,7 +55,7 @@ pose_cells_node:
     vt_active_decay: 1.0
     pc_vt_inject_energy: 0.15
     pc_cell_x_size: 0.03
-    exp_delta_pc_threshold: 2.0
+    exp_delta_pc_threshold: 1.0
     pc_vt_restore: 0.05
     # draw
     enable: true
@@ -63,7 +63,7 @@ pose_cells_node:
 experience_map_node:
   ros__parameters:
     exp_correction: 0.5
-    exp_loops: 10
+    exp_loops: 50
     exp_initial_em_deg: 0.0
     max_goals: 10
     # draw
