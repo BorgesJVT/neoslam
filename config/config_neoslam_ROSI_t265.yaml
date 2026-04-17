@@ -23,7 +23,7 @@ spatial_view_cells_node:
   ros__parameters:
     theta_alpha: 384
     theta_rho: 3
-    score_interval: 440
+    score_interval: 440  # 412 is good for ROSI_t265 and 440 for ROSI_t265_t2
     exclude_recent_intervals: 30
     # draw
     enable: true
@@ -63,7 +63,7 @@ pose_cells_node:
 experience_map_node:
   ros__parameters:
     exp_correction: 0.5
-    exp_loops: 50
+    exp_loops: 5
     exp_initial_em_deg: 0.0
     max_goals: 10
     # draw
