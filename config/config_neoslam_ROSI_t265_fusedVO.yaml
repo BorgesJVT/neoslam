@@ -28,20 +28,39 @@ spatial_view_cells_node:
     # draw
     enable: true
 
-# visual_odometry_node:
-#   ros__parameters:
-#     vtrans_image_x_min: 195
-#     vtrans_image_x_max: 475
-#     vtrans_image_y_min: 270
-#     vtrans_image_y_max: 430
-#     vrot_image_x_min: 40   # Upper area for rotation
-#     vrot_image_x_max: 600
-#     vrot_image_y_min: 75
-#     vrot_image_y_max: 240
-#     camera_fov_deg: 180.0  # Horizontal FOV of Intel Realsense d435
-#     camera_hz: 0.20
-#     vtrans_scaling: 6.0
-#     vtrans_max: 0.5
+visual_odometry_node:
+  ros__parameters:
+    vtrans_image_x_min: 40
+    vtrans_image_x_max: 600
+    vtrans_image_y_min: 270
+    vtrans_image_y_max: 430
+    vrot_image_x_min: 40   # Upper area for rotation
+    vrot_image_x_max: 600
+    vrot_image_y_min: 75
+    vrot_image_y_max: 240
+    camera_fov_deg: 69.4  # Horizontal FOV of Intel Realsense d435
+    camera_hz: 10.0
+    vtrans_scaling: 50.0
+    vtrans_max: 0.5
+
+steering_model_node:
+  ros__parameters:
+    # Constant to convert an electric current of a wheel into torque
+    wheel_current_2_torque: 0.00275863
+    # Constant to convert an electric current of a arm into torque
+    arm_current_2_torque: 0.0144672
+    # Distance between the center linepoint of two symetric wheels
+    body_width_wheels: 0.570 #[m]
+    # Distance between the center linepoint of two symetric wheels
+    body_width_tracks: 0.455 #[m]
+    # Wheel radius
+    wheels_radius: 0.132 #[m]
+    # Track radius
+    tracks_radius: 0.0683 #[m]
+    # Robot mass
+    mass: 55.0 #[kg]
+    # Moment of inertia on the Z axis on the principal inertia axis
+    izz: 8.58 #[kg.m^2]
 
 pose_cells_node:
   ros__parameters:

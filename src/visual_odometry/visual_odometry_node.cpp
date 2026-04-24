@@ -82,7 +82,7 @@ public:
     );
 
     pub_vo = this->create_publisher<nav_msgs::msg::Odometry>(
-      topic_root + "/odom", 10);
+      topic_root + "/odom_VO", 10);
     
     sub = this->create_subscription<sensor_msgs::msg::CompressedImage>(
       topic_root + "/camera/image/compressed", 10,

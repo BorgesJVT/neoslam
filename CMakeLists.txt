@@ -219,6 +219,30 @@ ament_target_dependencies(visual_odometry_node
   topological_msgs
 )
 
+# steering_model_node executable
+add_executable(steering_model_node 
+  src/steering_model/steering_model_node.cpp
+  src/steering_model/rosi.cpp)
+target_include_directories(steering_model_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/steering_model
+)
+target_link_libraries(steering_model_node
+  ${IRRLICHT_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+)
+ament_target_dependencies(steering_model_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  nav_msgs
+  geometry_msgs
+  visualization_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+
+
 # Install targets
 # install(TARGETS neoslam
 #   ARCHIVE DESTINATION lib
@@ -234,6 +258,7 @@ install(TARGETS
   pose_cells_node 
   experience_map_node 
   visual_odometry_node
+  steering_model_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
