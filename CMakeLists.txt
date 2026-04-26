@@ -242,6 +242,18 @@ ament_target_dependencies(steering_model_node
   tf2_geometry_msgs
 )
 
+# odom_fusion_node executable
+add_executable(odom_fusion_node 
+  src/odom_fusion/odom_fusion_node.cpp)
+target_include_directories(odom_fusion_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/odom_fusion
+)
+ament_target_dependencies(odom_fusion_node
+  rclcpp
+  std_msgs
+  nav_msgs
+)
+
 
 # Install targets
 # install(TARGETS neoslam
@@ -259,6 +271,7 @@ install(TARGETS
   experience_map_node 
   visual_odometry_node
   steering_model_node
+  odom_fusion_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

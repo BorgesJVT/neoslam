@@ -24,24 +24,24 @@ spatial_view_cells_node:
     theta_alpha: 384
     theta_rho: 3
     score_interval: 400  # 412 is good for ROSI_t265 and 440 for ROSI_t265_t2
-    exclude_recent_intervals: 50
+    exclude_recent_intervals: 100
     # draw
     enable: true
 
-visual_odometry_node:
-  ros__parameters:
-    vtrans_image_x_min: 40
-    vtrans_image_x_max: 600
-    vtrans_image_y_min: 270
-    vtrans_image_y_max: 430
-    vrot_image_x_min: 40   # Upper area for rotation
-    vrot_image_x_max: 600
-    vrot_image_y_min: 75
-    vrot_image_y_max: 240
-    camera_fov_deg: 69.4  # Horizontal FOV of Intel Realsense d435
-    camera_hz: 9.5
-    vtrans_scaling: 50.0
-    vtrans_max: 0.5
+# visual_odometry_node:
+#   ros__parameters:
+#     vtrans_image_x_min: 40
+#     vtrans_image_x_max: 600
+#     vtrans_image_y_min: 270
+#     vtrans_image_y_max: 430
+#     vrot_image_x_min: 40   # Upper area for rotation
+#     vrot_image_x_max: 600
+#     vrot_image_y_min: 75
+#     vrot_image_y_max: 240
+#     camera_fov_deg: 69.4  # Horizontal FOV of Intel Realsense d435
+#     camera_hz: 9.5
+#     vtrans_scaling: 50.0
+#     vtrans_max: 0.5
 
 steering_model_node:
   ros__parameters:
@@ -82,7 +82,7 @@ pose_cells_node:
 experience_map_node:
   ros__parameters:
     exp_correction: 0.5
-    exp_loops: 5
+    exp_loops: 1
     exp_initial_em_deg: 0.0
     max_goals: 10
     # draw

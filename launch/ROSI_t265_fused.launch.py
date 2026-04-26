@@ -3,15 +3,15 @@ from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
 
-# ros2 bag play ros1_2026_04_09_t2
-#  --clock --start-paused --remap /D400/color/image_raw:=/ROSI/camera/image /T265/pose/sample:=/ROSI/odom --rate 1.0
+# ros2 bag play ros1_2026_04_09
+#  --clock --start-paused --remap /D400/color/image_raw:=/ROSI/camera/image --rate 1.0
 
 def generate_launch_description():
     # Get package directory
     pkg_dir = get_package_share_directory('neoslam')
     
     # Configuration file
-    config_file = os.path.join(pkg_dir, 'config', 'config_neoslam_ROSI_t265.yaml')
+    config_file = os.path.join(pkg_dir, 'config', 'config_neoslam_ROSI_t265_fused.yaml')
     
     # Common parameters
     topic_root = 'ROSI'
@@ -131,7 +131,7 @@ def generate_launch_description():
         ]
     )
 
-    steering_node = Node(
+    st_model_node = Node(
         package='neoslam',
         executable='steering_model_node',
         name='steering_model_node',
@@ -140,19 +140,23 @@ def generate_launch_description():
             config_file,
             {
                 'topic_root': topic_root,
+                'media_path': media_path,
+                'image_file': image_file,
                 'use_sim_time': False
             }
         ]
     )
-
     odom_fusion_node = Node(
         package='neoslam',
         executable='odom_fusion_node',
         name='odom_fusion_node',
         output='screen',
         parameters=[
+            config_file,
             {
                 'topic_root': topic_root,
+                'media_path': media_path,
+                'image_file': image_file,
                 'use_sim_time': False
             }
         ]
@@ -165,7 +169,6 @@ def generate_launch_description():
         svc_node,
         pc_node,
         em_node,
-        vo_node,
-        steering_node,
-        odom_fusion_node,
+        st_model_node,
+        odom_fusion_node
     ])

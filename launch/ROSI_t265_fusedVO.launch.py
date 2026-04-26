@@ -146,6 +146,21 @@ def generate_launch_description():
             }
         ]
     )
+    odom_fusion_node = Node(
+        package='neoslam',
+        executable='odom_fusion_node',
+        name='odom_fusion_node',
+        output='screen',
+        parameters=[
+            config_file,
+            {
+                'topic_root': topic_root,
+                'media_path': media_path,
+                'image_file': image_file,
+                'use_sim_time': False
+            }
+        ]
+    )
 
     return LaunchDescription([
         vfe_node,
@@ -155,5 +170,6 @@ def generate_launch_description():
         pc_node,
         em_node,
         vo_node,
-        st_model_node
+        st_model_node,
+        odom_fusion_node
     ])
