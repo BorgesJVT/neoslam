@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Dependency installation script for neoslam
-# ROS 2 Rolling on Ubuntu
+# ROS 2 Jazzy on Ubuntu
 
 echo "======================================"
 echo "neoslam ROS 2 - Dependency Installation"
@@ -9,13 +9,13 @@ echo "======================================"
 echo ""
 
 # Check if ROS 2 is installed
-if [ -f "/opt/ros/rolling/setup.bash" ]; then
-    echo "✓ ROS 2 Rolling found"
-    source /opt/ros/rolling/setup.bash
+if [ -f "/opt/ros/jazzy/setup.bash" ]; then
+    echo "✓ ROS 2 Jazzy found"
+    source /opt/ros/jazzy/setup.bash
 else
-    echo "✗ ROS 2 Rolling not found!"
-    echo "Please install ROS 2 Rolling first:"
-    echo "https://docs.ros.org/en/rolling/Installation.html"
+    echo "✗ ROS 2 Jazzy not found!"
+    echo "Please install ROS 2 Jazzy first:"
+    echo "https://docs.ros.org/en/jazzy/Installation.html"
     exit 1
 fi
 
@@ -29,11 +29,11 @@ sudo apt update
 # Install ROS 2 dependencies
 echo "Installing ROS 2 packages..."
 sudo apt install -y \
-    ros-rolling-cv-bridge \
-    ros-rolling-image-transport \
-    ros-rolling-image-transport-plugins \
-    ros-rolling-tf2-geometry-msgs \
-    ros-rolling-vision-opencv
+    ros-jazzy-cv-bridge \
+    ros-jazzy-image-transport \
+    ros-jazzy-image-transport-plugins \
+    ros-jazzy-tf2-geometry-msgs \
+    ros-jazzy-vision-opencv
 
 # Install OpenCV
 echo "Installing OpenCV..."
